@@ -37,23 +37,26 @@ def any(hash, keys, default=''):
     return default
 
 
+def trySet(object, key, value):
+    try:
+        setattr(object, key, value)
+    except:
+        pass
+
+
 def ApplyInfoToMetadata(infoData, metadata):
-    metadata.title = any(infoData, ['fulltitle', 'title', 'name'])
-    if 'name' in dir(metadata):
-        metadata.name = metadata.title
-    if 'original_title' in dir(metadata):
-        metadata.original_title = metadata.title
-    if 'duration' in dir(metadata):
-        metadata.duration = infoData['duration']
-    metadata.summary = any(infoData, ['description', 'summary'])
+    trySet(metadata, 'title', any(infoData, ['fulltitle', 'title', 'name']))
+    trySet(metadata, 'name', any(infoData, ['name', 'fulltitle', 'title']))
+    trySet(metadata, 'original_title', any(infoData, ['original_title', 'fulltitle', 'title', 'name']))
+    trySet(metadata, 'duration', infoData['duration'])
+    trySet(metadata, 'summary', any(infoData, ['description', 'summary']))
     date = any(infoData, ['upload_date', 'date', 'year'])
     if date:
         date = Datetime.ParseDate(str(date))
-        metadata.originally_available_at = date.date()
-        if 'year' in dir(metadata):
-            metadata.year = date.year
-    metadata.rating = infoData['average_rating'] * 2 if 'average_rating' in infoData else 10.0
-    metadata.content_rating = 0
+        trySet(metadata, 'originally_available_at', date.date())
+        trySet(metadata, 'year', date.year)
+    trySet(metadata, 'rating', infoData['average_rating'] * 2 if 'average_rating' in infoData else 10.0)
+    trySet(metadata, 'content_rating', 0)
     try:
         metadata.directors.clear()
         meta_director = metadata.directors.new()
@@ -65,7 +68,7 @@ def ApplyInfoToMetadata(infoData, metadata):
 
 class YoutubeDLMovieAgent(Agent.Movies):
     name = 'Youtube-DL Movies'
-    languages = [Locale.Language.English]
+    languages = [Locale.Language.English, Locale.Language.German, Locale.Language.NoLanguage]
     primary_provider = True
     accepts_from = [
         'com.plexapp.agents.localmedia',
